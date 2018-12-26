@@ -10,17 +10,31 @@ import UIKit
 import CoreLocation
 import Alamofire
 import SwiftyJSON
+import MBProgressHUD
 
 let GD_KEY = "374d34e4c13da1543a1198556679dc7f"
 
-class WeatherViewController: UIViewController, LocationServiceDelegate {
+class WeatherViewController: UIViewController, LocationServiceDelegate, UITableViewDelegate, UITableViewDataSource {
     @IBOutlet weak var tableWeather: UITableView!
+    private var array:[String] = []
     private var locationService:LocationService = LocationService()
+    private var hud: MBProgressHUD?
     
     override func viewDidLoad() {
         super.viewDidLoad()
 
         // Do any additional setup after loading the view.
+        
+        hud = MBProgressHUD.showAdded(to: self.view, animated: true)
+        //小矩形的背景色
+        hud?.bezelView.color = UIColor.clear
+        //显示的文字
+        hud?.label.text = "加载中..."
+        //细节文字
+        hud?.detailsLabel.text = "请耐心等待..."
+        //设置背景，加遮罩
+        hud?.backgroundView.style = .blur
+        
         locationService.delegate = self
         locationService.requestLocation()
     }
@@ -45,7 +59,13 @@ class WeatherViewController: UIViewController, LocationServiceDelegate {
                             if let jsonWeather = response.result.value {
                                 print("通过城市码查询天气\nJSON: \(jsonWeather)")
                                 let json = JSON(jsonWeather)
-//                                let adcode = json["infocode"].stringValue
+                                for (wKey, wValue) in json["lives"][0] {
+                                    print("遍历结果：\(wKey)\t\(wValue)")
+                                    self.array.append("\(wKey):\(wValue)")
+                                }
+                                
+                                self.hud?.hide(animated: true, afterDelay: 1)
+                                self.tableWeather.reloadData()
                             }
                         }
                     })
@@ -69,15 +89,15 @@ class WeatherViewController: UIViewController, LocationServiceDelegate {
         return adcode
     }
 
-
-    /*
-    // MARK: - Navigation
-
-    // In a storyboard-based application, you will often want to do a little preparation before navigation
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        // Get the new view controller using segue.destination.
-        // Pass the selected object to the new view controller.
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return array.count
     }
-    */
-
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let identifier = "UITableViewCell"
+        let cell:UITableViewCell = tableView.dequeueReusableCell(withIdentifier: identifier) ?? UITableViewCell(style: .default, reuseIdentifier: identifier)
+        cell.textLabel?.text = self.array[indexPath.row]
+        
+        return cell
+    }
 }

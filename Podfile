@@ -11,4 +11,5 @@ target 'SwiftLearn' do
   pod 'SnapKit'
   pod 'Alamofire'
   pod 'SwiftyJSON'
+  pod 'MBProgressHUD', '~>1.1.0'
 end
